@@ -3,7 +3,7 @@
 // @namespace	bro3_beyond
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		0.91.7-J
+// @version		0.91.7-J3
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -32,6 +32,9 @@
 // 0.91.6	2017/08/13	RAPT. 内政官をセットして即スキルを使う処理を新方式で対応してみた、少し速くなったかも。
 // 0.91.7	2017/08/23	RAPT. 0.91.6 の改修の影響で、スキル検索結果からスキルが使えなくなっていたのを修正。（スキル検索結果からは従来方式でスキルを使います）
 // 0.91.7-J	2017/09/16	JIRO. 一括デッキセットの低コストが使えなくなっていたのを修正
+// 0.91.7-J2	2017/10/13	JIRO. NPC探索ができない不具合を修正
+// 0.91.7-J3	2017/10/15	JIRO. 神医の術式検索と傾国検索のボタンを追加
+
 
 // load jQuery
 jQuery.noConflict();
@@ -1162,7 +1165,7 @@ function profileControl() {
 					// NPC座標探索
 					//-------------
 					if (q$("#search_event_npc").prop('checked') == false) {
-						search_pattern = new RegExp("rewrite\\('(.*)', '.*', '.*', '(.*)', '(.*)', '([★]+)', '.*', '', '', '', '', '1', '.*'\\); overOpe");
+						search_pattern = new RegExp("rewriteAddRemoving\\('\\d+','(.*)', '.*', '.*', '(.*)', '(.*)', '([★]+)', '.*', '', '', '', '', '1', '0', .*\\); overOpe");
 					} else {
 						search_pattern = new RegExp("rewritePF\\(.*,'(.*)', '.*', '.*', '(.*)', '(.*)', '([★]+)', '.*', '', '', '', '', '1', '.*'\\); overOpe");
 					}
@@ -1270,7 +1273,7 @@ function profileControl() {
 					// NPC隣接探索
 					//-------------
 					if (q$("#search_event_npc").prop('checked') == false) {
-						search_pattern = new RegExp("rewrite\\('(.*)', '(.*)', '.*', '(.*)', '(.*)', '([★]*)', '.*', '.*', '.*', '.*', '.*', '.*', '.*'\\); overOpe");
+						search_pattern = new RegExp("rewriteAddRemoving\\('\\d+','(.*)', '(.*)', '.*', '(.*)', '(.*)', '([★]*)', '.*', '.*', '.*', '.*', '.*', '.*', '*.', .*\\); overOpe");
 					} else {
 						search_pattern = new RegExp("rewritePF\\(.*,'(.*)', '(.*)', '.*', '(.*)', '(.*)', '([★]*) '.*', '.*', '.*', '.*', '.*', '.*', '.*'\\); overOpe");
 					}
@@ -3347,7 +3350,7 @@ function deckControl() {
 	}
 
 	// 運営のデッキのマージン枠が広すぎるので減らす
-	q$("#cardListDeck").css('margin-bottom', '10px');
+//	q$("#cardListDeck").css('margin-bottom', '10px');
 	// 一括デッキ解除
 	if (g_beyond_options[DECK_17] == true) {
 		addAllDropDeckButton();
@@ -5887,6 +5890,8 @@ function deck_resttime_checker() {
 						"<span style='font-weight: bold;'>検索条件</span>" +
 						"<input type='text' id='search_skill' size=20 style='margin-left:4px; margin-right: 4px; padding: 2px;'>" +
 						"<input type='button' id='search_file' value='検索'>&nbsp;" +
+						"<input type='button' id='search_file2' value='神医の術式'>&nbsp;" +
+						"<input type='button' id='search_file3' value='傾国'>&nbsp;" +
 						"<span id='search_status' style='font-weight: bold;'></span>" +
 					"</div>" +
 				"</fieldset>" +
@@ -5913,6 +5918,31 @@ function deck_resttime_checker() {
 				alert("検索するスキル名を入力してください。");
 				return;
 			}
+			q$("#search_file").val("処理実行中").prop("disabled", true);
+
+			q$("#search-result-div").css({'display':'none'});
+			q$("#search-result").css({'display':'none'});
+			q$("#search-result tr").remove();
+			search_skills(target);
+		}
+	);
+
+	// 検索
+	q$("input[id='search_file2']").on('click',
+		function(){
+			var target = "神医の術式";
+			q$("#search_file").val("処理実行中").prop("disabled", true);
+
+			q$("#search-result-div").css({'display':'none'});
+			q$("#search-result").css({'display':'none'});
+			q$("#search-result tr").remove();
+			search_skills(target);
+		}
+	);
+
+	q$("input[id='search_file3']").on('click',
+		function(){
+			var target = "傾国";
 			q$("#search_file").val("処理実行中").prop("disabled", true);
 
 			q$("#search-result-div").css({'display':'none'});
@@ -5976,10 +6006,13 @@ function deck_resttime_checker() {
 
 				var no;
 				if (l != 0) {
+//					no = {'search_configs[type]': 1, 'search_configs[q]': skill_name, 'p': count, 'l' : lab};
 					no = {'p': count, 'l' : lab};
 				} else {
+//					no = {'search_configs[type]': 1, 'search_configs[q]': skill_name, 'p': count};
 					no = {'p': count};
 				}
+
 				q$.ajax({
 					url: '/card/deck.php',
 					type: 'GET',
@@ -6329,12 +6362,12 @@ function multipleDeckSet() {
 				"<div id='multiple_set_status'>" +
 					"<span style='margin-left: 4px;'>一括デッキセット</span>" +
 					"<select id='multiple_set_mode' style='margin: 4px;'>" +
+						"<option value='lowcost'>低コスト武将（コスト順）</option>" +
 						"<option value='gi'>魏の軍極・軍防・督戦対象武将</option>" +
 						"<option value='go'>呉の軍極・軍防・督戦対象武将</option>" +
 						"<option value='shoku'>蜀の軍極・軍防・督戦対象武将</option>" +
 						"<option value='hoka'>他の軍極・軍防・督戦対象武将</option>" +
 						"<option value='renkan'>連環の計対象武将</option>" +
-						"<option value='lowcost'>低コスト武将（コスト順）</option>" +
 					"</select>" +
 					selects.prop('outerHTML') +
 					"<input id='multi_card_set' type='button' style='font-size: 12px;' value='実行'></input>" +
@@ -7062,8 +7095,8 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 				if (is_active == true) {
 					el.before(
 						"<div>" +
-							"<input type='button' id='deck_domestic_" + i + "' style='font-size: 10px;' value='内政'></input>" +
-							"<input type='button' id='deck_set_" + i + "' style='font-size: 10px;' value='配置'></input>" +
+//							"<input type='button' id='deck_domestic_" + i + "' style='font-size: 10px;' value='内政'></input>" +
+							"<input type='button' id='deck_set_" + i + "' style='font-size: 15px;' value='配置'></input>" +
 							"<span style='margin-left: 1px; font-size: 12px;'>" +
 								selects.prop('outerHTML') +
 							"</span>" +
@@ -7072,8 +7105,8 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 				} else {
 					el.before(
 						"<div>" +
-							"<input type='button' style='font-size: 10px;' value='内政' disabled></input>" +
-							"<input type='button' style='font-size: 10px;' value='配置' disabled></input>" +
+//							"<input type='button' style='font-size: 10px;' value='内政' disabled></input>" +
+							"<input type='button' style='font-size: 15px;' value='配置' disabled></input>" +
 							"<span style='margin-left: 1px; font-size: 12px;'>" +
 								selects.prop('outerHTML') +
 							"</span>" +
