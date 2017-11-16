@@ -3,7 +3,7 @@
 // @namespace	bro3_beyond
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		0.91.7-J3
+// @version		0.91.7-J4
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -31,9 +31,10 @@
 // 0.91.5	2017/08/06	RAPT. 報告書の討伐・攻撃ログのTSV出力機能が動作しない環境があったので対策
 // 0.91.6	2017/08/13	RAPT. 内政官をセットして即スキルを使う処理を新方式で対応してみた、少し速くなったかも。
 // 0.91.7	2017/08/23	RAPT. 0.91.6 の改修の影響で、スキル検索結果からスキルが使えなくなっていたのを修正。（スキル検索結果からは従来方式でスキルを使います）
-// 0.91.7-J	2017/09/16	JIRO. 一括デッキセットの低コストが使えなくなっていたのを修正
+// 0.91.7-J1	2017/09/16	JIRO. 一括デッキセットの低コストが使えなくなっていたのを修正
 // 0.91.7-J2	2017/10/13	JIRO. NPC探索ができない不具合を修正
 // 0.91.7-J3	2017/10/15	JIRO. 神医の術式検索と傾国検索のボタンを追加
+// 0.91.7-J4	2017/11/16	JIRO. ファイル画面のレイアウト変更対応
 
 
 // load jQuery
@@ -3350,7 +3351,7 @@ function deckControl() {
 	}
 
 	// 運営のデッキのマージン枠が広すぎるので減らす
-//	q$("#cardListDeck").css('margin-bottom', '10px');
+	q$("#cardListDeck").css('margin-bottom', '10px');
 	// 一括デッキ解除
 	if (g_beyond_options[DECK_17] == true) {
 		addAllDropDeckButton();
@@ -4606,7 +4607,9 @@ function execUnionPart() {
 									// 水鏡指定がある場合、水鏡かどうかを判定
 									var almighty = false;
 									if (use_almighty == true) {
-										var card_name = q$("div[class='right'] table[class='statusParameter1'] tbody tr", cards[i]).eq(1).children('td').eq(0).text();
+										//var card_name = q$("div[class='right'] table[class='statusParameter1'] tbody tr", cards[i]).eq(1).children('td').eq(0).text();
+                                        var card_name = q$("div[class='left'] div.illustMini__div--name", cards[i]).html();
+
 										card_name = card_name.replace(/[ \t]/g, "");
 										if (card_name == "水鏡" || card_name == "水鏡(自分用)") {
 											almighty = true;
@@ -4892,7 +4895,9 @@ function execUnionPart() {
 									// 水鏡指定がある場合、水鏡かどうかを判定
 									var almighty = false;
 									if (use_almighty == true) {
-										var card_name = q$("div[class='right'] table[class='statusParameter1'] tbody tr", cards[i]).eq(1).children('td').eq(0).text();
+										//var card_name = q$("div[class='right'] table[class='statusParameter1'] tbody tr", cards[i]).eq(1).children('td').eq(0).text();
+                                        var card_name = q$("div[class='left'] div.illustMini__div--name", cards[i]).html();
+
 										card_name = card_name.replace(/[ \t]/g, "");
 										if (card_name == "水鏡" || card_name == "水鏡(自分用)") {
 											almighty = true;
@@ -6040,11 +6045,13 @@ function deck_resttime_checker() {
 
 							// 基礎情報(武将名、武将レベル、コスト）
 							var info = q$("table[class='statusParameter1'] tbody tr", cards.eq(i));
-							var cname = q$("td", info.eq(1)).eq(0).text();
+//							var cname = q$("td", info.eq(1)).eq(0).text();
+                            var cname = q$("div[class='left'] div.illustMini__div--name", cards.eq(i)).html();
 							var clevel = q$("td", info.eq(2)).eq(0).text();
 							var cost = q$("td", info.eq(3)).eq(0).text();
 							var chp = q$("td", info.eq(5)).eq(0).text();
 							var cno = q$("td", info.eq(0)).eq(0).text();
+
 
 							// スキル名＋回復時間
 							var info2 = q$("div[class='kaifuku_cnt']", cards.eq(i));
@@ -6485,7 +6492,8 @@ function multipleDeckSet() {
 									continue;
 								}
 
-								var cname = q$("td", info.eq(1)).eq(0).text();
+								//var cname = q$("td", info.eq(1)).eq(0).text();
+                                var cname = q$("div[class='left'] div.illustMini__div--name", cards.eq(i)).html();
 								var clevel = parseInt(q$("td", info.eq(2)).eq(0).text());
 								var cost = parseFloat(q$("td", info.eq(3)).eq(0).text());
 								var cint = parseFloat(q$("td", info.eq(1)).eq(1).text());
